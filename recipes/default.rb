@@ -17,4 +17,6 @@
 # limitations under the License.
 
 
+package 'util-linux'
+package 'device-mapper'
 package 'cryptsetup-luks'
