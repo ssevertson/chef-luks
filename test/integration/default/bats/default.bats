@@ -4,9 +4,9 @@
   which cryptsetup
 }
 
-@test "LUKS volumed was created at /dev/sdb" {
-  blkid -t TYPE=crypto_LUKS -o device | grep sdb
-  cryptsetup isLuks /dev/sdb
+@test "LUKS volumed was created at /dev/loop0" {
+  blkid -t TYPE=crypto_LUKS -o device | grep loop0
+  cryptsetup isLuks /dev/loop0
 }
 
 @test "/etc/crypttab was updated" {
