@@ -20,13 +20,17 @@
 class Chef::Exceptions::LUKS < RuntimeError; end
 
 action :create do
-  if @current_resource.exists
-    Chef::Log.info "#{@new_resource} already exists - nothing to do."
-  else
-    converge_by("Create #{@new_resource}") do
+  if !@current_resource.exists
+    converge_by("Creating #{@new_resource}") do
       luks_format_device
     end
-  end
+  elsif !@current_resource.open
+    converge_by("Opening #{@new_resource}") do
+      luks_open_device
+    end
+  else
+    Chef::Log.info "#{@new_resource} already exists and is already open - nothing to do."
+  end  
 end
 
 def whyrun_supported?
@@ -36,9 +40,14 @@ end
 def load_current_resource
   @current_resource = Chef::Resource::LuksDevice.new(@new_resource.name)
   @current_resource.key_file(@new_resource.key_file)
+  @current_resource.luks_name(@new_resource.luks_name)
 
   if is_luks_device? @current_resource.block_device
     @current_resource.exists = true
+    
+    if is_luks_open? @current_resource.luks_name
+      @current_resource.open = true
+    end
   end
 end
 
@@ -50,10 +59,20 @@ def is_luks_device?(block_device)
   cmd.exitstatus == 0
 end
 
-def append_to_crypttab(block_device, luks_name, key_file, options={})
-  ::File.open('/etc/crypttab', 'a') do |crypttab|
-    crypttab.puts("#{luks_name}\t#{block_device}\t#{key_file}")
-  end
+def is_luks_open?(luks_name)
+  cmd = Mixlib::ShellOut.new(
+    '/sbin/cryptsetup', 'status', luks_name
+    ).run_command
+  cmd.exitstatus == 0
+end
+
+def update_crypttab(block_device, luks_name, key_file)
+  file = Chef::Util::FileEdit.new('/etc/crypttab')
+  file.insert_line_if_no_match(
+    "^#{luks_name}\t#{block_device}\t#{key_file}",
+    "#{luks_name}\t#{block_device}\t#{key_file}\tluks"
+  )
+  file.write_file
 end
 
 def luks_open_device
@@ -63,7 +82,7 @@ def luks_open_device
 
   raise Chef::Exceptions::LUKS.new cmd.stderr if cmd.exitstatus != 0
 
-  append_to_crypttab new_resource.block_device,
+  update_crypttab new_resource.block_device,
     new_resource.luks_name, new_resource.key_file
 end
 

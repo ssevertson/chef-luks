@@ -8,6 +8,7 @@ platforms:
   driver_config:
     box: opscode-centos-6.4
     box_url: https://opscode-vm.s3.amazonaws.com/vagrant/opscode_centos-6.4_provisionerless.box
+- name: ubuntu-14.04
 
 suites:
 - name: default

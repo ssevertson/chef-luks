@@ -32,3 +32,4 @@ attribute :luks_name, :kind_of => String,
 
 
 attr_accessor :exists
+attr_accessor :open
