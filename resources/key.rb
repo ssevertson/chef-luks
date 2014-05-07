@@ -1,8 +1,8 @@
 #
 # Cookbook Name:: luks
-# Recipe:: default
+# Resource:: key
 #
-# Copyright 2013, Intoximeters, Inc
+# Copyright 2014, Digital Measures LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,14 +16,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package 'util-linux'
+include CryptSetup
+include KeyHash
 
-case node[:platform_family]
-when 'debian'
-  package 'dmsetup'
-  package 'cryptsetup'
-when 'rhel', 'fedora'
-  package 'device-mapper'
-  package 'cryptsetup-luks'
-end
 
+actions :create, :remove
+default_action :create
+
+attribute :block_device,
+  :name_attribute => true,
+  :kind_of => String,
+  :required => true
+
+attribute :key_file,
+  :kind_of => String,
+  :default => Chef::Config[:encrypted_data_bag_secret]
+
+attribute :new_key_file,
+  :kind_of => String
+  
+attribute :key_slot,
+  :kind_of => Integer,
+  :required => true
+
+attr_accessor :uuid
+attr_accessor :key_hash
+attr_accessor :new_key_hash
+attr_accessor :enabled
+attr_accessor :matches

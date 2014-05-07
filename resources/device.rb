@@ -17,19 +17,26 @@
 # limitations under the License.
 
 
-actions :create, :delete
-default_action :create
+actions :open, :enable, :format
+default_action [:open, :enable]
 
-attribute :block_device, :name_attribute => true,
-  :kind_of => String, :required => true
+attribute :block_device,
+  :name_attribute => true,
+  :kind_of => String,
+  :required => true
 
-attribute :key_file, :kind_of => String,
+attribute :key_file,
+  :kind_of => String,
   :default => Chef::Config[:encrypted_data_bag_secret],
   :required => true
 
-attribute :luks_name, :kind_of => String,
+attribute :luks_name,
+  :kind_of => String,
   :required => true
+  
+attribute :key_slot,
+  :kind_of => Integer
 
-
-attr_accessor :exists
-attr_accessor :open
+attr_accessor :formatted
+attr_accessor :opened
+attr_accessor :enabled
