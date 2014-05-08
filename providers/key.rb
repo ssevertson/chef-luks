@@ -25,11 +25,11 @@ action :create do
   if @current_resource.enabled && @current_resource.matches
     Chef::Log.info "#{@new_resource} key slot enabled and matches hash - nothing to do."
   else
-    if @new_resource.key and !@new_resource.key_file
+    if @new_resource.key
       @new_resource.key_file_temp = create_temp_file(@new_resource.key)
       @new_resource.key_file(new_resource.key_file_temp.path)
     end
-    if @new_resource.new_key and !@new_resource.new_key_file
+    if @new_resource.new_key
       @new_resource.new_key_file_temp = create_temp_file(@new_resource.new_key)
       @new_resource.new_key_file(@new_resource.new_key_file_temp.path)
     end
@@ -73,7 +73,7 @@ action :remove do
   if !@current_resource.enabled
     Chef::Log.info "#{@new_resource} already disabled - nothing to do."
   else
-    if @new_resource.key and !@new_resource.key_file
+    if @new_resource.key
       @new_resource.key_file_temp = create_temp_file(@new_resource.key)
       @new_resource.key_file(@new_resource.key_file_temp.path)
     end
@@ -101,15 +101,15 @@ def load_current_resource
   @current_resource.key_slot(@new_resource.key_slot)
   
   # Set up new resource here (rather than in the resource) as Chef may need to create files.
-  if @new_resource.key_file
-    @new_resource.key_hash = hash_file @new_resource.key_file
-  elsif @new_resource.key
+  if @new_resource.key
     @new_resource.key_hash = hash @new_resource.key
+  elsif @new_resource.key_file
+    @new_resource.key_hash = hash_file @new_resource.key_file
   end
-  if @new_resource.new_key_file
-    @new_resource.new_key_hash = hash_file @new_resource.new_key_file
-  elsif @new_resource.new_key
+  if @new_resource.new_key
     @new_resource.new_key_hash = hash @new_resource.new_key
+  elsif @new_resource.new_key_file
+    @new_resource.new_key_hash = hash_file @new_resource.new_key_file
   end
   @new_resource.uuid = cryptsetup_get_uuid(@new_resource.block_device)
     
