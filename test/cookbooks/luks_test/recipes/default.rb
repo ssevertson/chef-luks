@@ -39,37 +39,35 @@ mount '/mnt/test' do
   device '/dev/mapper/luks-test'
 end
 
-file '/tmp/key_file1' do
+file '/tmp/key_file' do
   content 'qwertyuiopqwertyuiop'
-end
-
-file '/tmp/key_file2' do
-  content 'poiuytrewqpoiuytrewq'
 end
 
 luks_key 'add-key-1' do
   block_device '/dev/loop0'
-  new_key_file '/tmp/key_file1'
+  key_file Chef::Config[:encrypted_data_bag_secret]
+  new_key_file '/tmp/key_file'
   key_slot 1
 end
 
 luks_key 'add-key-2' do
   block_device '/dev/loop0'
-  new_key_file '/tmp/key_file2'
+  key 'qwertyuiopqwertyuiop'
+  new_key 'poiuytrewqpoiuytrewq'
   key_slot 2
 end
 
 luks_key 'remove-key-2' do
   block_device '/dev/loop0'
   action :remove
-  key_file '/tmp/key_file1'
+  key_file '/tmp/key_file'
   key_slot 2
 end
 
 luks_key 'change-key' do
   block_device '/dev/loop0'
-  key_file '/tmp/key_file1'
-  new_key_file '/tmp/key_file2'
+  key_file '/tmp/key_file'
+  new_key 'poiuytrewqpoiuytrewq'
   key_slot 1
 end
 

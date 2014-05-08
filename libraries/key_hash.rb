@@ -2,8 +2,11 @@ require 'digest'
 require 'fileutils'
 
 module KeyHash
+  def hash(key)
+    Digest::SHA256.hexdigest key
+  end
   def hash_file(filename)
-    Digest::SHA256.hexdigest File.read filename
+    hash File.read filename
   end
   
   def load_hash(key_hash_path, uuid, key_slot)

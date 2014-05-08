@@ -16,6 +16,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'tempfile'
+
 include CryptSetup
 include KeyHash
 
@@ -23,6 +25,14 @@ action :create do
   if @current_resource.enabled && @current_resource.matches
     Chef::Log.info "#{@new_resource} key slot enabled and matches hash - nothing to do."
   else
+    if @new_resource.key and !@new_resource.key_file
+      @new_resource.key_file_temp = create_temp_file(@new_resource.key)
+      @new_resource.key_file(new_resource.key_file_temp.path)
+    end
+    if @new_resource.new_key and !@new_resource.new_key_file
+      @new_resource.new_key_file_temp = create_temp_file(@new_resource.new_key)
+      @new_resource.new_key_file(@new_resource.new_key_file_temp.path)
+    end
     if @current_resource.enabled
       converge_by("Changing key for #{@new_resource}") do
         cryptsetup_key_change(
@@ -42,6 +52,14 @@ action :create do
         )
       end
     end
+    if @new_resource.key_file_temp
+      @new_resource.key_file_temp.close!()
+      @new_resource.key_file_temp = nil
+    end
+    if @new_resource.new_key_file_temp
+      @new_resource.new_key_file_temp.close!()
+      @new_resource.new_key_file_temp = nil
+    end
     save_hash(
       @run_context.node[:luks][:key_hash_path],
       @new_resource.uuid,
@@ -55,12 +73,20 @@ action :remove do
   if !@current_resource.enabled
     Chef::Log.info "#{@new_resource} already disabled - nothing to do."
   else
+    if @new_resource.key and !@new_resource.key_file
+      @new_resource.key_file_temp = create_temp_file(@new_resource.key)
+      @new_resource.key_file(@new_resource.key_file_temp.path)
+    end
     converge_by("Removing key for #{@new_resource}") do
       cryptsetup_key_remove(
         @new_resource.block_device,
         @new_resource.key_slot,
         @new_resource.key_file
       )
+    end
+    if @new_resource.key_file_temp
+      @new_resource.key_file_temp.close!()
+      @new_resource.key_file_temp = nil
     end
   end
 end
@@ -74,15 +100,18 @@ def load_current_resource
   @current_resource.block_device(@new_resource.block_device)
   @current_resource.key_slot(@new_resource.key_slot)
   
-  # Set up new resource's hashes/UUID here (rather than in the resource) as Chef may need to store key files.
+  # Set up new resource here (rather than in the resource) as Chef may need to create files.
   if @new_resource.key_file
     @new_resource.key_hash = hash_file @new_resource.key_file
+  elsif @new_resource.key
+    @new_resource.key_hash = hash @new_resource.key
   end
   if @new_resource.new_key_file
     @new_resource.new_key_hash = hash_file @new_resource.new_key_file
+  elsif @new_resource.new_key
+    @new_resource.new_key_hash = hash @new_resource.new_key
   end
-  @new_resource.uuid = cryptsetup_get_uuid(
-    @new_resource.block_device)
+  @new_resource.uuid = cryptsetup_get_uuid(@new_resource.block_device)
     
   @current_resource.uuid = @new_resource.uuid
 
@@ -97,4 +126,11 @@ def load_current_resource
   @current_resource.matches = (
     @current_resource.key_hash == @new_resource.new_key_hash
   )
+end
+
+def create_temp_file(contents)
+  file = Tempfile.new 'crypt'
+  file.write contents
+  file.flush
+  file
 end

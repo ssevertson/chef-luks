@@ -28,9 +28,15 @@ attribute :block_device,
   :kind_of => String,
   :required => true
 
+attribute :key,
+  :kind_of => String
+  
 attribute :key_file,
   :kind_of => String,
   :default => Chef::Config[:encrypted_data_bag_secret]
+
+attribute :new_key,
+  :kind_of => String
 
 attribute :new_key_file,
   :kind_of => String
@@ -41,6 +47,8 @@ attribute :key_slot,
 
 attr_accessor :uuid
 attr_accessor :key_hash
+attr_accessor :key_file_temp
 attr_accessor :new_key_hash
+attr_accessor :new_key_file_temp
 attr_accessor :enabled
 attr_accessor :matches
