@@ -21,7 +21,7 @@ require 'tempfile'
 include CryptSetup
 include KeyHash
 
-action :create do
+action :save do
   if @current_resource.enabled && @current_resource.matches
     Chef::Log.info "#{@new_resource} key slot enabled and matches hash - nothing to do."
   else

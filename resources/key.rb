@@ -20,8 +20,8 @@ include CryptSetup
 include KeyHash
 
 
-actions :create, :remove
-default_action :create
+actions :save, :remove
+default_action :save
 
 attribute :block_device,
   :name_attribute => true,
