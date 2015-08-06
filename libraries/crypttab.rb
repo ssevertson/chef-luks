@@ -37,12 +37,11 @@ module CryptTab
       if regexp_exact_match.match(line)
         found = true
       elsif match = regexp_block_device.match(line)
-        lines_new << "#{luks_name}#{match[1]}#{block_device}#{match[2]}#{key_file}#{match[3]}luks#{key_slot ? ",key-slot=#{key_slot}" : ''}"
+        line = "#{luks_name}#{match[1]}#{block_device}#{match[2]}#{key_file}#{match[3]}luks#{key_slot ? ",key-slot=#{key_slot}" : ''}"
         found = true
         changed = true
-      else
-        lines_new << line
       end
+      lines_new << line
     end
     
     if !found
