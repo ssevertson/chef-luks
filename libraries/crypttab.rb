@@ -51,7 +51,11 @@ module CryptTab
     end
     
     # Remove duplicate lines that may appear due to old bugs
-    changed ? lines_new.uniq : nil
+    if lines_new.uniq!
+      changed = true
+    end
+    
+    changed ? lines_new : nil
   end
   
   def crypttab_disable(block_device)
