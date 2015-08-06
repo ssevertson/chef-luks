@@ -28,13 +28,15 @@ module CryptTab
     # Not using Chef::Util::FileEdit, as it's missing some methods to support true idempotence
     lines_new = []
     
-    regexp_exact_match = Regexp.new("^#{luks_name}\s+#{block_device}\s+#{key_file}\s+luks.*$")
-    regexp_block_device = Regexp.new("^[^\s]+(\s+)#{block_device}(\s+)[^s]+(\s+)luks.*$")
+    regexp_exact_match = Regexp.new("^#{luks_name}\\s+#{block_device}\\s+#{key_file}\\s+luks#{key_slot ? ",key-slot=#{key_slot}" : ''}$")
+    regexp_block_device = Regexp.new("^[^\\s]+(\\s+)#{block_device}(\\s+)[^\\s]+(\\s+)luks.*$")
     
     changed = false
     found = false
     lines.each do |line|
-      if line !~ regexp_exact_match && match = regexp_block_device.match(line)
+      if regexp_exact_match.match(line)
+        found = true
+      elsif match = regexp_block_device.match(line)
         lines_new << "#{luks_name}#{match[1]}#{block_device}#{match[2]}#{key_file}#{match[3]}luks#{key_slot ? ",key-slot=#{key_slot}" : ''}"
         found = true
         changed = true
@@ -48,7 +50,8 @@ module CryptTab
       changed = true
     end
     
-    changed ? lines_new : nil
+    # Remove duplicate lines that may appear due to old bugs
+    changed ? lines_new.uniq : nil
   end
   
   def crypttab_disable(block_device)
